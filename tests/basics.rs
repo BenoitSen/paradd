@@ -39,9 +39,7 @@ fn count_copy_txt_to_txt() -> Result<(), Error> {
     cmd.args(["-i", in_filename])
         .args(["-o", out_filename])
         .args(["--count", "10"]);
-    let output = cmd.output().expect("Failed to execute the command");
-
-    println!("{:?}", output);
+    cmd.output().expect("Failed to execute the command");
 
     let contents_origin = fs::read_to_string(in_filename).expect("Input file is missing.");
     let contents_copied = fs::read_to_string(out_filename).expect("Output file was not created.");
@@ -49,6 +47,28 @@ fn count_copy_txt_to_txt() -> Result<(), Error> {
     assert_eq!(contents_origin.get(0..10).unwrap(), contents_copied);
 
     fs::remove_file(in_filename)?;
+    fs::remove_file(out_filename)?;
+    Ok(())
+}
+
+#[test]
+fn count_copy_bytes_to_bin() -> Result<(), Error> {
+    let in_filename = "/dev/zero";
+    let out_filename = "out_count_zeros.bin";
+    let byte_count: usize = 1000;
+
+    let mut cmd = Command::cargo_bin("paradd")?;
+    cmd.args(["-i", in_filename])
+        .args(["-o", out_filename])
+        .args(["--count", &byte_count.to_string()]);
+    cmd.output().expect("Failed to execute the command");
+
+    let content_copied = fs::read(out_filename).expect("Input file is missing.");
+    assert_eq!(content_copied.len(), 1000);
+    for byte in content_copied {
+        assert_eq!(byte, 0);
+    }
+
     fs::remove_file(out_filename)?;
     Ok(())
 }
